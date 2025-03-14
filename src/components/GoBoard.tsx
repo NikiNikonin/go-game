@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import BlackGoStone from '../assets/black-go-stone.svg'
 import WhiteGoStone from '../assets/white-go-stone.svg'
@@ -16,11 +16,11 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     const brickSide = cellSide - 2;
     const [gradient, setGradient] = useState<string>();
     const rectRef = useRef<HTMLDivElement | null>(null);
-    const bricks = Array.from({ length: bricksCnt[Math.max(size, prevSize)] ** 2 });
+    const bricks = useMemo(() => Array.from({ length: bricksCnt[Math.max(size, prevSize)] ** 2 }), [size, prevSize]);
     const hatNumbers = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]];
     const sideBarChars = [['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']];
     const [board, setBoard] = useState<("transparent" | "black" | "white")[][]>(
-        Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("transparent"))
+        Array.from({ length: bricksCnt[size] }, () => Array(bricksCnt[size]).fill("transparent"))
     );
     const [currentPlayer, setCurrentPlayer] = useState<("black" | "white")>("black");
     const stonesBackgrounds = {
@@ -28,57 +28,58 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
         white: WhiteGoStone,
         transparent: TransparentGoStone,
     };
-    let relativeX, relativeY;
+    const lastMousePosition = useRef({ x: 0, y: 0 });
 
-    const handleClick = (row: number, col: number) => {
+    const handleClick = useCallback((row: number, col: number) => {
         if (board[row][col] !== "transparent") return;
 
-        const newBoard = board.map((r, i) =>
-            r.map((c, j) => (i === row && j === col ? (currentPlayer === "black" ? "black" : "white") : c))
-        );
+        setBoard((prevBoard) => {
+            const newBoard = prevBoard.map((r, i) =>
+                r.map((c, j) => (i === row && j === col ? currentPlayer : c))
+            );
+            return newBoard;
+        });
 
-        setBoard(newBoard);
-        setCurrentPlayer(currentPlayer === "black" ? "white" : "black");
-    };
-
-    const GoStone = ({ row, col, color }: { row: number; col: number; color: "black" | "white" | "transparent" }) => (
-        <div
-            className={`absolute rounded-full cursor-pointer`}
-            onClick={() => handleClick(row, col)}
-            style={{
-                width: `${stoneRadius * 2}px`,
-                height: `${stoneRadius * 2}px`,
-                top: `${(row) * cellSide - stoneRadius + 1}px`,
-                left: `${(col) * cellSide - stoneRadius + 1}px`,
-                zIndex: 11
-            }}
-        >
-            <img src={stonesBackgrounds[color]} alt={color} loading="lazy"/>
-        </div>
-    );
+        setCurrentPlayer((prev) => (prev === "black" ? "white" : "black"));
+    }, [board, currentPlayer]);
 
     useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            if (rectRef.current) {
-                const rect = rectRef.current.getBoundingClientRect();
-                relativeX = e.clientX - rect.left;
-                relativeY = e.clientY - rect.top;
-                updateGradient(relativeX, relativeY);
-            }
-        };
+        let animationFrame: number;
 
         if (prevSize !== size) {
-            setBoard(Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("transparent")));
+            setBoard(Array.from({ length: bricksCnt[size] }, () => Array(bricksCnt[size]).fill("transparent")));
             setTimeout(() => {
                 setPrevSize(size);
             }, 300)
         }
 
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => {
-            window.removeEventListener('mousemove', handleMouseMove);
+        const updateGradient = () => {
+            if (!rectRef.current || !lastMousePosition.current) return;
+
+            const rect = rectRef.current.getBoundingClientRect();
+            const offsetX = lastMousePosition.current.x - rect.left;
+            const offsetY = lastMousePosition.current.y - rect.top;
+
+            setGradient(
+                `radial-gradient(circle at ${offsetX}px ${offsetY}px, white, rgba(50, 50, 50, 1) ${gradientRadius}px)`
+            );
+            animationFrame = requestAnimationFrame(updateGradient);
         };
-    }, [size]);
+
+        const handleMouseMove = (e: MouseEvent) => {
+            lastMousePosition.current = { x: e.clientX, y: e.clientY };
+        };
+
+        window.addEventListener("mousemove", handleMouseMove);
+        animationFrame = requestAnimationFrame(updateGradient);
+
+
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            cancelAnimationFrame(animationFrame);
+        };
+    }, [playing, size]);
+
 
     const getTextMetrics = (text: string, fontSize: string = '13px', fontFamily: string = 'Arial') => {
         const canvas = document.createElement('canvas');
@@ -89,10 +90,6 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
         const metrics = context.measureText(text);
         return metrics;
     }
-
-    const updateGradient = (mouseX: number, mouseY: number) => {
-        setGradient(`radial-gradient(circle at ${mouseX}px ${mouseY}px, white, rgba(50, 50, 50, 1) ${gradientRadius}px)`);
-    };
 
     return (
         <div className="relative w-screen h-screen overflow-hidden">
@@ -158,7 +155,6 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     justifyContent: 'center',
                 }}
             >
-
                 <motion.div
                     key={size}
                     initial={{ scale: 1.5 ** (size - prevSize) }}
@@ -167,6 +163,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 grid"
                     style={{
                         transformOrigin: "center",
+                        willChange: "transform",
                         display: "grid",
                         gridTemplateColumns: `repeat(${bricksCnt[Math.max(prevSize, size)]}, ${brickSide}px)`,
                         gridTemplateRows: `repeat(${bricksCnt[Math.max(prevSize, size)]}, ${brickSide}px)`,
@@ -188,7 +185,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                 {playing && (
                     board.map((row, rowIndex) =>
                         row.map((cell, colIndex) =>
-                            <GoStone key={`${rowIndex}-${colIndex}`} row={rowIndex} col={colIndex} color={cell} />
+                            <GoStone key={`${rowIndex}-${colIndex}`} row={rowIndex} col={colIndex} color={cell} stoneRadius={stoneRadius} cellSide={cellSide} onClick={handleClick} stonesBackgrounds={stonesBackgrounds} />
                         )
                     ))}
             </div>
@@ -197,3 +194,37 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
 };
 
 export default GoBoard;
+
+const GoStone = React.memo(
+    ({
+        row,
+        col,
+        color,
+        stoneRadius,
+        cellSide,
+        onClick,
+        stonesBackgrounds,
+    }: {
+        row: number;
+        col: number;
+        color: "black" | "white" | "transparent";
+        stoneRadius: number;
+        cellSide: number;
+        onClick: (row: number, col: number) => void;
+        stonesBackgrounds: { black: string; white: string; transparent: string };
+    }) => (
+        <div
+            className="absolute rounded-full cursor-pointer"
+            onClick={() => onClick(row, col)}
+            style={{
+                width: `${stoneRadius * 2}px`,
+                height: `${stoneRadius * 2}px`,
+                top: `${row * cellSide - stoneRadius + 1}px`,
+                left: `${col * cellSide - stoneRadius + 1}px`,
+                zIndex: 11,
+            }}
+        >
+            <img src={stonesBackgrounds[color]} alt={color} loading="lazy" />
+        </div>
+    )
+);
