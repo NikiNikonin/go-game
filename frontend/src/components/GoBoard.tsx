@@ -20,7 +20,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     const hatNumbers = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]];
     const sideBarChars = [['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']];
     const [board, setBoard] = useState<("transparent" | "black" | "white")[][]>(
-        Array.from({ length: bricksCnt[size] }, () => Array(bricksCnt[size]).fill("transparent"))
+        Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("transparent"))
     );
     const [currentPlayer, setCurrentPlayer] = useState<("black" | "white")>("black");
     const stonesBackgrounds = {
@@ -47,8 +47,8 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
         let animationFrame: number;
 
         if (prevSize !== size) {
-            setBoard(Array.from({ length: bricksCnt[size] }, () => Array(bricksCnt[size]).fill("transparent")));
             setTimeout(() => {
+                setBoard(Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("transparent")));
                 setPrevSize(size);
             }, 300)
         }
