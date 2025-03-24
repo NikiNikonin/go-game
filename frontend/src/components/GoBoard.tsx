@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion';
 import BlackGoStone from '../assets/black-go-stone.svg'
 import WhiteGoStone from '../assets/white-go-stone.svg'
-import TransparentGoStone from '../assets/neutral-go-stone.svg'
+import NeutralGoStone from '../assets/neutral-go-stone.svg'
 
 const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean }) => {
     const API_URL = "http://localhost:8080";
@@ -20,14 +20,12 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     const bricks = useMemo(() => Array.from({ length: bricksCnt[Math.max(size, prevSize)] ** 2 }), [size, prevSize]);
     const hatNumbers = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]];
     const sideBarChars = [['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']];
-    const [board, setBoard] = useState<("Neutral" | "Black" | "White")[][]>(
-        Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("Neutral"))
-    );
+    const [board, setBoard] = useState<string[][]>();
     const [currentPlayer, setCurrentPlayer] = useState<("Black" | "White")>("Black");
-    const stonesBackgrounds = {
+    const stonesBackgrounds: { [key: string]: string } = {
         Black: BlackGoStone,
         White: WhiteGoStone,
-        Neutral: TransparentGoStone,
+        Neutral: NeutralGoStone,
     };
     const lastMousePosition = useRef({ x: 0, y: 0 });
 
@@ -46,9 +44,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
             if (data === false) {
                 console.log("Invalid move!");
             } else {
-                // Обновление состояния доски из полученного JSON
-                setBoard(data); // Предполагаем, что data - это двумерный массив, представляющий доску
-                console.log("Board updated:", data);
+                setBoard(data);
                 setCurrentPlayer((prev) => (prev === "Black" ? "White" : "Black"));
             }
         } catch (error) {
@@ -62,8 +58,6 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     }
 
     const handleClick = useCallback((row: number, col: number) => {
-        if (board[row][col] !== "Neutral") return;
-
         const move = getMoveString(row, col);
         fetchToServer(move);
 
@@ -208,7 +202,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     ))}
                 </motion.div>
 
-                {playing && (
+                {playing && board && (
                     board.map((row, rowIndex) =>
                         row.map((cell, colIndex) =>
                             <GoStone key={`${rowIndex}-${colIndex}`} row={rowIndex} col={colIndex} color={cell} stoneRadius={stoneRadius} cellSide={cellSide} onClick={handleClick} stonesBackgrounds={stonesBackgrounds} />

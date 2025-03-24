@@ -15,7 +15,6 @@ bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
 }
 
 bool Board::makeMove(std::string move) {
-    std::cout << move << '\n';
     if (move == "skip") {
         _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
         if (_doubleSkip)
@@ -34,8 +33,6 @@ bool Board::makeMove(std::string move) {
 
     if (_board[row][col] != State::Neutral) return false;
 
-    // BEFORE HERE ALL OK
-
     bool took_someone;
     std::vector<std::vector<State>> tmp_board = _board;
     std::unordered_set<StoneGroup> tmp_stone_groups = _stone_groups;
@@ -43,16 +40,18 @@ bool Board::makeMove(std::string move) {
     std::vector<std::pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
     std::vector<StoneGroup> new_groups({StoneGroup({row, col}, &_board)}), will_be_dead;
     for (const auto& dir : directions) {
-        if (_board[row + dir.first][col + dir.second] == State::Neutral) continue;
-        if (_board[row + dir.first][col + dir.second] == State(_curr_player)) {
+        int x = (row + dir.first < 0 ? 0 : (row + dir.first >= _size ? _size : row + dir.first));
+        int y = (col + dir.second < 0 ? 0 : (col + dir.second >= _size ? _size : col + dir.second));
+        if (_board[x][y] == State::Neutral) continue;
+        if (_board[x][y] == State(_curr_player)) {
             for (const auto& group : tmp_stone_groups)
-                if (group.isIn(row + dir.first, col + dir.second)) {
+                if (group.isIn(x, x)) {
                     new_groups.push_back(group);
                     break;
                 }
         } else
             for (auto& group : tmp_stone_groups)
-                if (group.isIn(row + dir.first, col + dir.second)) {
+                if (group.isIn(x, x)) {
                     if (group.liberty() == 1)
                         will_be_dead.push_back(group);
                     else
@@ -81,6 +80,7 @@ bool Board::makeMove(std::string move) {
     _lastBoard = std::move(_board);
     _board = std::move(tmp_board);
     _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
+
     return true;
 }
 

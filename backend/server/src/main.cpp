@@ -32,8 +32,7 @@ int main() {
     // **Обработчик создания новой игры**
     svr.Post("/new_game", [](const Request& req, Response& res) {
         addCorsHeaders(res);
-        std::cout << "Received request: " << req.body << std::endl; // Лог запроса
-
+        
         json request;
         try {
             request = json::parse(req.body);
