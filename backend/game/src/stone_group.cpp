@@ -69,19 +69,6 @@ bool StoneGroup::operator==(const StoneGroup& other) const {
     return _stones == other._stones && _liberty == other._liberty && _color == other._color;
 }
 
-namespace std {
-    template <>
-    struct hash<StoneGroup> {
-        size_t operator()(const StoneGroup& group) const {
-            size_t h = 0;
-            for (const auto& stone : group.constStonesRef()) {
-                h ^= std::hash<int>()(stone.first) ^ (std::hash<int>()(stone.second) << 1);
-            }
-            return h;
-        }
-    };
-}
-
 void StoneGroup::decrLiverty1() const {
     --_liberty;
 }

@@ -1,28 +1,92 @@
-#include <iostream>
+#include "../../game/include/board.hpp"
 #include "../../lib/httplib.h"
+#include "../../lib/json.hpp"
+#include <iostream>
+#include <string>
+#include <vector>
+using namespace httplib;
+using json = nlohmann::json;
+
+Board* board = nullptr;
+
+json boardToJson(Board& b) {
+    json j;
+    j["board"] = b.getBoard();
+    return j;
+}
+
+void addCorsHeaders(Response& res) {
+    res.set_header("Access-Control-Allow-Origin", "*");
+    res.set_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set_header("Access-Control-Allow-Headers", "Content-Type");
+}
 
 int main() {
-    httplib::Server svr;
+    Server svr;
 
-    // CORS Middleware (добавляем заголовки ко всем ответам)
-    svr.set_default_headers({
-        {"Access-Control-Allow-Origin", "*"},
-        {"Access-Control-Allow-Methods", "GET, POST, OPTIONS"},
-        {"Access-Control-Allow-Headers", "Content-Type, Authorization"}
+    svr.Options("/.*", [](const Request& req, Response& res) {
+        addCorsHeaders(res);
+        res.status = 200;
     });
 
-    // GET-запрос (проверка связи с сервером)
-    svr.Get("/", [](const httplib::Request&, httplib::Response& res) {
-        res.set_content("Hello", "text/plain");
+    // **Обработчик создания новой игры**
+    svr.Post("/new_game", [](const Request& req, Response& res) {
+        addCorsHeaders(res);
+        std::cout << "Received request: " << req.body << std::endl; // Лог запроса
+
+        json request;
+        try {
+            request = json::parse(req.body);
+        } catch (const json::parse_error& e) {
+            res.status = 400;
+            res.set_content("Invalid JSON", "text/plain");
+            return;
+        }
+
+        if (!request.contains("size")) {
+            res.status = 400;
+            res.set_content("Missing size", "text/plain");
+            return;
+        }
+
+        int size = request["size"];
+        if (size < 0 || size > 2) {
+            res.status = 400;
+            res.set_content("Invalid board size", "text/plain");
+            return;
+        }
+
+        if (board) delete board;
+        board = new Board(size);
+
+        res.set_content(boardToJson(*board).dump(), "application/json");
     });
 
-    // OPTIONS-запрос (чтобы preflight-запросы тоже работали)
-    svr.Options(".*", [](const httplib::Request&, httplib::Response& res) {
-        res.status = 204; // No Content
+    // **Обработчик хода**
+    svr.Post("/move", [](const Request& req, Response& res) {
+        addCorsHeaders(res);
+        if (!board) {
+            res.status = 400;
+            res.set_content("No active game", "text/plain");
+            return;
+        }
+
+        json request = json::parse(req.body);
+        if (!request.contains("move")) {
+            res.status = 400;
+            res.set_content("Missing 'move' field", "text/plain");
+            return;
+        }
+
+        std::string move = request["move"];
+        if (!board->makeMove(move)) {                     // Проверяем, можно ли сделать ход
+            res.set_content("false", "application/json"); // Вернем false
+            return;
+        }
+
+        res.set_content(boardToJson(*board).dump(), "application/json");
     });
 
-    std::cout << "Server is running on http://localhost:8080\n";
-    svr.listen("0.0.0.0", 8080);
-
-    return 0;
+    std::cout << "Server running on http://localhost:8080\n";
+    svr.listen("localhost", 8080);
 }

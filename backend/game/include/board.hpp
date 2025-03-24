@@ -1,6 +1,7 @@
 #pragma once
 #include "./enums.hpp"
 #include "./stone_group.hpp"
+#include <iostream>
 #include <queue>
 #include <set>
 #include <string>
@@ -21,7 +22,8 @@ class Board {
 
   public:
     Board(int);
-    ~Board() = default;
+    ~Board();
 
     bool makeMove(std::string);
+    const std::vector<std::vector<std::string>> getBoard() const;
 };

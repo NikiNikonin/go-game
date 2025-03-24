@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { motion } from 'framer-motion';
 import BlackGoStone from '../assets/black-go-stone.svg'
 import WhiteGoStone from '../assets/white-go-stone.svg'
-import TransparentGoStone from '../assets/transparent-go-stone.svg'
+import TransparentGoStone from '../assets/neutral-go-stone.svg'
 
 const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean }) => {
+    const API_URL = "http://localhost:8080";
     const [prevSize, setPrevSize] = useState(size);
     const stoneScale = 0.7;
     const bricksCnt = [8, 12, 18];
@@ -19,28 +20,53 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     const bricks = useMemo(() => Array.from({ length: bricksCnt[Math.max(size, prevSize)] ** 2 }), [size, prevSize]);
     const hatNumbers = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]];
     const sideBarChars = [['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']];
-    const [board, setBoard] = useState<("transparent" | "black" | "white")[][]>(
-        Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("transparent"))
+    const [board, setBoard] = useState<("Neutral" | "Black" | "White")[][]>(
+        Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("Neutral"))
     );
-    const [currentPlayer, setCurrentPlayer] = useState<("black" | "white")>("black");
+    const [currentPlayer, setCurrentPlayer] = useState<("Black" | "White")>("Black");
     const stonesBackgrounds = {
-        black: BlackGoStone,
-        white: WhiteGoStone,
-        transparent: TransparentGoStone,
+        Black: BlackGoStone,
+        White: WhiteGoStone,
+        Neutral: TransparentGoStone,
     };
     const lastMousePosition = useRef({ x: 0, y: 0 });
 
+    async function fetchToServer(move: string) {
+        try {
+            const response = await fetch(`${API_URL}/move`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ move }),
+            });
+
+            const data = await response.json();
+
+            if (data === false) {
+                console.log("Invalid move!");
+            } else {
+                // Обновление состояния доски из полученного JSON
+                setBoard(data); // Предполагаем, что data - это двумерный массив, представляющий доску
+                console.log("Board updated:", data);
+                setCurrentPlayer((prev) => (prev === "Black" ? "White" : "Black"));
+            }
+        } catch (error) {
+            console.error("Error making a move:", error);
+        }
+    }
+
+    function getMoveString(row: number, col: number): string {
+        const letter = String.fromCharCode('a'.charCodeAt(0) + row);
+        return `${letter}${col}`;
+    }
+
     const handleClick = useCallback((row: number, col: number) => {
-        if (board[row][col] !== "transparent") return;
+        if (board[row][col] !== "Neutral") return;
 
-        setBoard((prevBoard) => {
-            const newBoard = prevBoard.map((r, i) =>
-                r.map((c, j) => (i === row && j === col ? currentPlayer : c))
-            );
-            return newBoard;
-        });
+        const move = getMoveString(row, col);
+        fetchToServer(move);
 
-        setCurrentPlayer((prev) => (prev === "black" ? "white" : "black"));
     }, [board, currentPlayer]);
 
     useEffect(() => {
@@ -48,7 +74,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
 
         if (prevSize !== size) {
             setTimeout(() => {
-                setBoard(Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("transparent")));
+                setBoard(Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("Neutral")));
                 setPrevSize(size);
             }, 300)
         }
@@ -61,7 +87,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
             const offsetY = lastMousePosition.current.y - rect.top;
 
             setGradient(
-                `radial-gradient(circle at ${offsetX}px ${offsetY}px, white, rgba(50, 50, 50, 1) ${gradientRadius}px)`
+                `radial-gradient(circle at ${offsetX}px ${offsetY}px, White, rgba(50, 50, 50, 1) ${gradientRadius}px)`
             );
             animationFrame = requestAnimationFrame(updateGradient);
         };
@@ -107,7 +133,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                             position: 'absolute',
                             bottom: `${stoneRadius + 9}px`,
                             fontSize: '13px',
-                            color: 'white',
+                            color: 'White',
                             left: `${(number - 1) * (brickSide + 2) - getTextMetrics(number.toString()).width / 2}px`,
                         }}
                     >
@@ -130,7 +156,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                             position: 'absolute',
                             marginTop: '-9px',
                             fontSize: '13px',
-                            color: 'white',
+                            color: 'White',
                             top: `${index * (brickSide + 2)}px`,
                             right: `${stoneRadius + 13}px`,
                         }}
@@ -176,7 +202,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                             style={{
                                 width: `${brickSide}px`,
                                 height: `${brickSide}px`,
-                                backgroundColor: 'black',
+                                backgroundColor: 'Black',
                             }}
                         />
                     ))}
@@ -207,11 +233,11 @@ const GoStone = React.memo(
     }: {
         row: number;
         col: number;
-        color: "black" | "white" | "transparent";
+        color: "Black" | "White" | "Neutral";
         stoneRadius: number;
         cellSide: number;
         onClick: (row: number, col: number) => void;
-        stonesBackgrounds: { black: string; white: string; transparent: string };
+        stonesBackgrounds: { Black: string; White: string; Neutral: string };
     }) => (
         <div
             className="absolute rounded-full cursor-pointer"

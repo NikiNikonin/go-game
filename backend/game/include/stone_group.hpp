@@ -32,5 +32,14 @@ class StoneGroup {
 };
 
 namespace std {
-template <> struct hash<StoneGroup>;
+  template <>
+  struct hash<StoneGroup> {
+      size_t operator()(const StoneGroup& group) const {
+          size_t h = 0;
+          for (const auto& stone : group.constStonesRef()) {
+              h ^= std::hash<int>()(stone.first) ^ (std::hash<int>()(stone.second) << 1);
+          }
+          return h;
+      }
+  };
 }

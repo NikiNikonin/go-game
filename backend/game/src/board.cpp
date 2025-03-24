@@ -1,8 +1,13 @@
 #include "../include/board.hpp"
 
-Board::Board(int s)
-    : _size(std::move(s)), _board(std::vector<std::vector<State>>(_size, std::vector<State>(_size, State::Neutral))), _stone_groups({}),
-      _curr_player(PlayerColor::Black) {
+Board::Board(int s) : _stone_groups({}), _curr_player(PlayerColor::Black) {
+    int sizes[3] = {9, 13, 19};
+    _size = sizes[s];
+    _board = std::vector<std::vector<State>>(_size, std::vector<State>(_size, State::Neutral));
+}
+
+Board::~Board() {
+    std::cout << "pizda\n";
 }
 
 bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
@@ -10,6 +15,7 @@ bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
 }
 
 bool Board::makeMove(std::string move) {
+    std::cout << move << '\n';
     if (move == "skip") {
         _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
         if (_doubleSkip)
@@ -23,10 +29,12 @@ bool Board::makeMove(std::string move) {
 
     int row = move.front() - 'a';
     if (row < 0 || row >= _size) return false;
-    int col = std::stoi(move.substr(1)) - 1;
+    int col = std::stoi(move.substr(1));
     if (col < 0 || col >= _size) return false;
 
     if (_board[row][col] != State::Neutral) return false;
+
+    // BEFORE HERE ALL OK
 
     bool took_someone;
     std::vector<std::vector<State>> tmp_board = _board;
@@ -73,5 +81,18 @@ bool Board::makeMove(std::string move) {
     _lastBoard = std::move(_board);
     _board = std::move(tmp_board);
     _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
+    return true;
+}
+
+const std::vector<std::vector<std::string>> Board::getBoard() const {
+    std::vector<std::vector<std::string>> string_board(_size, std::vector<std::string>(_size));
+    for (int i = 0; i < _size; ++i)
+        for (int j = 0; j < _size; ++j)
+            string_board[i][j] = (_board[i][j] == State::White ? "White" : (_board[i][j] == State::Black ? "Black" : "Neutral"));
+
+    return string_board;
+}
+
+bool Board::endGame() {
     return true;
 }

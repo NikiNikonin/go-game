@@ -5,6 +5,7 @@ import GoBoard from "../components/GoBoard";
 
 const botLevels = ["Easy", "Medium", "Hard"];
 const boardSizes = ["9x9", "13x13", "19x19"];
+const API_URL = "http://localhost:8080";
 
 export default function Auto() {
     const [selectedBotLevel1, setSelectedBotLevel1] = useState(0);
@@ -24,6 +25,24 @@ export default function Auto() {
             window.removeEventListener('beforeunload', handleOnBeforeUnload, { capture: false })
         }
     }, [isPlaying])
+
+    async function handlePlayButtonClick() {
+        setPlaying(true);
+        try {
+            const response = await fetch(`${API_URL}/new_game`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ size: selectedBoardSize }),
+            });
+    
+            const data = await response.json();
+            console.log("New Game:", data);
+        } catch (error) {
+            console.error("Error starting a new game:", error);
+        }
+    }
 
     return (
         <div>
@@ -59,7 +78,7 @@ export default function Auto() {
                         {/* Play button */}
                         <div className="flex items-center">
                             <Button
-                                onClick={() => setPlaying(true)}
+                                onClick={() => handlePlayButtonClick()}
                                 style={{ width: '160px', borderRadius: '25px' }}
                                 className="relative rounded-full bg-blue-500 text-white text-lg font-semibold shadow-lg hover:bg-blue-600 duration-300"
                             >
