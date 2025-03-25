@@ -29,10 +29,9 @@ int main() {
         res.status = 200;
     });
 
-    // **Обработчик создания новой игры**
     svr.Post("/new_game", [](const Request& req, Response& res) {
         addCorsHeaders(res);
-        
+
         json request;
         try {
             request = json::parse(req.body);
@@ -61,7 +60,6 @@ int main() {
         res.set_content(boardToJson(*board).dump(), "application/json");
     });
 
-    // **Обработчик хода**
     svr.Post("/move", [](const Request& req, Response& res) {
         addCorsHeaders(res);
         if (!board) {
@@ -78,12 +76,13 @@ int main() {
         }
 
         std::string move = request["move"];
-        if (!board->makeMove(move)) {                     // Проверяем, можно ли сделать ход
-            res.set_content("false", "application/json"); // Вернем false
-            return;
+        if (!board->makeMove(move)) { // <- внутри makeMove есть huy
+            res.set_content("false", "application/json");
+        } else {
+            res.set_content(boardToJson(*board).dump(), "application/json");
         }
-
-        res.set_content(boardToJson(*board).dump(), "application/json");
+        board->huy(); // huy после makeMove
+        return;
     });
 
     std::cout << "Server running on http://localhost:8080\n";

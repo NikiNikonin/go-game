@@ -4,10 +4,11 @@ Board::Board(int s) : _stone_groups({}), _curr_player(PlayerColor::Black) {
     int sizes[3] = {9, 13, 19};
     _size = sizes[s];
     _board = std::vector<std::vector<State>>(_size, std::vector<State>(_size, State::Neutral));
+    std::cout << "nu pizdec\n";
 }
 
 Board::~Board() {
-    std::cout << "pizda\n";
+    std::cout << "nu ahuet'\n";
 }
 
 bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
@@ -26,15 +27,30 @@ bool Board::makeMove(std::string move) {
 
     if (move.size() != 2 && move.size() != 3) return false;
 
-    int row = move.front() - 'a';
+    if (move.front() >= 'J') --move.front();
+    int row = move.front() - 'A';
     if (row < 0 || row >= _size) return false;
-    int col = std::stoi(move.substr(1));
+    int col = std::stoi(move.substr(1)) - 1;
     if (col < 0 || col >= _size) return false;
+    std::cout << row << ' ' << col << '\n';
 
     if (_board[row][col] != State::Neutral) return false;
 
     bool took_someone;
+
+    // for (int i = 0; i < _size; ++i) {
+    //     for (int j = 0; j < _size; ++j) std::cout << char(_board[i][j]) << ' ';
+    //     std::cout << '\n';
+    // }
+
     std::vector<std::vector<State>> tmp_board = _board;
+
+    // std::cout << "\n\n";
+    // for (int i = 0; i < _size; ++i) {
+    //     for (int j = 0; j < _size; ++j) std::cout << char(tmp_board[i][j]) << ' ';
+    //     std::cout << '\n';
+    // }
+
     std::unordered_set<StoneGroup> tmp_stone_groups = _stone_groups;
     tmp_board[row][col] = State(_curr_player);
     std::vector<std::pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
@@ -81,6 +97,14 @@ bool Board::makeMove(std::string move) {
     _board = std::move(tmp_board);
     _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
 
+    huy();
+    // for(auto i : _stone_groups){
+    //     for(auto j : i.constStonesRef()){
+    //         std::cout << j.first << ' ' << j.second << " | ";
+    //     }
+    //     std::cout << '\n';
+    // }
+
     return true;
 }
 
@@ -95,4 +119,12 @@ const std::vector<std::vector<std::string>> Board::getBoard() const {
 
 bool Board::endGame() {
     return true;
+}
+
+void Board::huy() {
+    std::cout << "\n\n";
+    for (int i = 0; i < _size; ++i) {
+        for (int j = 0; j < _size; ++j) std::cout << char(_board[i][j]) << ' ';
+        std::cout << '\n';
+    }
 }

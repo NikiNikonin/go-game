@@ -4,6 +4,8 @@ import BlackGoStone from '../assets/black-go-stone.svg'
 import WhiteGoStone from '../assets/white-go-stone.svg'
 import NeutralGoStone from '../assets/neutral-go-stone.svg'
 
+type StoneColor = "White" | "Black" | "Neutral";
+
 const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean }) => {
     const API_URL = "http://localhost:8080";
     const [prevSize, setPrevSize] = useState(size);
@@ -20,9 +22,11 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     const bricks = useMemo(() => Array.from({ length: bricksCnt[Math.max(size, prevSize)] ** 2 }), [size, prevSize]);
     const hatNumbers = [[1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]];
     const sideBarChars = [['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N'], ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T']];
-    const [board, setBoard] = useState<string[][]>();
+    const [board, setBoard] = useState<StoneColor[][]>(
+        Array.from({ length: bricksCnt[size] + 1 }, () => Array(bricksCnt[size] + 1).fill("Neutral"))
+    );
     const [currentPlayer, setCurrentPlayer] = useState<("Black" | "White")>("Black");
-    const stonesBackgrounds: { [key: string]: string } = {
+    const stonesBackgrounds = {
         Black: BlackGoStone,
         White: WhiteGoStone,
         Neutral: NeutralGoStone,
@@ -40,11 +44,10 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
             });
 
             const data = await response.json();
-
             if (data === false) {
                 console.log("Invalid move!");
             } else {
-                setBoard(data);
+                setBoard(data.board);
                 setCurrentPlayer((prev) => (prev === "Black" ? "White" : "Black"));
             }
         } catch (error) {
@@ -53,8 +56,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     }
 
     function getMoveString(row: number, col: number): string {
-        const letter = String.fromCharCode('a'.charCodeAt(0) + row);
-        return `${letter}${col}`;
+        return `${sideBarChars[size][row]}${hatNumbers[size][col]}`;
     }
 
     const handleClick = useCallback((row: number, col: number) => {
@@ -202,7 +204,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     ))}
                 </motion.div>
 
-                {playing && board && (
+                {playing && (
                     board.map((row, rowIndex) =>
                         row.map((cell, colIndex) =>
                             <GoStone key={`${rowIndex}-${colIndex}`} row={rowIndex} col={colIndex} color={cell} stoneRadius={stoneRadius} cellSide={cellSide} onClick={handleClick} stonesBackgrounds={stonesBackgrounds} />
@@ -227,7 +229,7 @@ const GoStone = React.memo(
     }: {
         row: number;
         col: number;
-        color: "Black" | "White" | "Neutral";
+        color: StoneColor;
         stoneRadius: number;
         cellSide: number;
         onClick: (row: number, col: number) => void;

@@ -25,5 +25,6 @@ class Board {
     ~Board();
 
     bool makeMove(std::string);
+    void huy();
     const std::vector<std::vector<std::string>> getBoard() const;
 };
