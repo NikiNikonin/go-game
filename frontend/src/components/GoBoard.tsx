@@ -92,12 +92,20 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
             lastMousePosition.current = { x: e.clientX, y: e.clientY };
         };
 
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === "s") {
+              fetchToServer("skip");
+            }
+          };
+
         window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("keydown", handleKeyPress);
         animationFrame = requestAnimationFrame(updateGradient);
 
 
         return () => {
             window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("keydown", handleKeyPress);
             cancelAnimationFrame(animationFrame);
         };
     }, [playing, size]);

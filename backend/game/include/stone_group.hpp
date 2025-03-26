@@ -28,10 +28,11 @@ class StoneGroup {
     State color() const;
     bool isIn(int, int) const;
     void addStone(std::pair<int, int>);
-    void addGroup(StoneGroup&&);
+    void addGroup(StoneGroup&);
     void decrLiverty1() const;
 
     bool operator==(const StoneGroup&) const;
+    void operator=(StoneGroup&);
 };
 
 namespace std {

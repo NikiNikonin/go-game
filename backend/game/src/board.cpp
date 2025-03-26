@@ -4,19 +4,15 @@ Board::Board(int s) : _stone_groups({}), _curr_player(PlayerColor::Black) {
     int sizes[3] = {9, 13, 19};
     _size = sizes[s];
     _board = std::vector<std::vector<State>>(_size, std::vector<State>(_size, State::Neutral));
-    // std::cout << "nu pizdec\n";
 }
 
-Board::~Board() {
-    // std::cout << "nu ahuet'\n";
-}
+Board::~Board() = default;
 
 bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
     return board == _lastBoard;
 }
 
 bool Board::makeMove(std::string move) {
-    // std::cout << "this в makeMove: " << this << '\n';
 
     if (move == "skip") {
         _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
@@ -39,18 +35,7 @@ bool Board::makeMove(std::string move) {
 
     bool took_someone;
 
-    // for (int i = 0; i < _size; ++i) {
-    //     for (int j = 0; j < _size; ++j) std::cout << char(_board[i][j]) << ' ';
-    //     std::cout << '\n';
-    // }
-
     std::vector<std::vector<State>> tmp_board = _board;
-
-    // std::cout << "\n\n";
-    // for (int i = 0; i < _size; ++i) {
-    //     for (int j = 0; j < _size; ++j) std::cout << char(tmp_board[i][j]) << ' ';
-    //     std::cout << '\n';
-    // }
 
     tmp_board[row][col] = State(_curr_player);
     std::unordered_set<StoneGroup> tmp_stone_groups = _stone_groups;
@@ -62,29 +47,30 @@ bool Board::makeMove(std::string move) {
         int y = (col + dir.second < 0 ? 0 : (col + dir.second >= _size ? _size : col + dir.second));
         if (_board[x][y] == State::Neutral) continue;
 
-
         if (_board[x][y] == State(_curr_player)) {
             for (const auto& group : tmp_stone_groups)
-                if (group.isIn(x, x)) {
+                if (group.isIn(x, y)) {
                     new_groups.push_back(group);
                     break;
                 }
         } else
             for (auto& group : tmp_stone_groups)
-                if (group.isIn(x, x)) {
-                    if (group.liberty() == 1)
-                        will_be_dead.push_back(group);
-                    else
-                        group.decrLiverty1();
+                if (group.isIn(x, y)) {
+                    group.updateLiberty();
+                    if (group.liberty() == 0) will_be_dead.push_back(group);
+
                     break;
                 }
     }
     took_someone = !will_be_dead.empty();
-    for (auto& dead : will_be_dead) tmp_stone_groups.erase(dead);
-    StoneGroup new_stone_group(State(_curr_player), &_board);
+    for (auto& dead : will_be_dead) {
+        tmp_stone_groups.erase(dead);
+        dead.clearStones();
+    }
+    StoneGroup new_stone_group(State(_curr_player), &tmp_board);
     for (auto& group : new_groups) {
         tmp_stone_groups.erase(group);
-        new_stone_group.addGroup(std::move(group));
+        new_stone_group.addGroup(group);
     }
     if (new_stone_group.liberty() == 0 && !took_someone) return false;
     tmp_stone_groups.insert(new_stone_group);
@@ -99,24 +85,11 @@ bool Board::makeMove(std::string move) {
     }
 
     if (isKoViolation(tmp_board)) return false;
-    _stone_groups = std::move(tmp_stone_groups);
+    _stone_groups.clear();
+    _stone_groups = tmp_stone_groups;
     _lastBoard = std::move(_board);
     _board = std::move(tmp_board);
     _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
-
-    // huy();
-    //  for(auto i : _stone_groups){
-    //      for(auto j : i.constStonesRef()){
-    //          std::cout << j.first << ' ' << j.second << " | ";
-    //      }
-    //      std::cout << '\n';
-    //  }
-    for(auto i : _stone_groups) {
-        std::cout << i.liberty() << '\n';
-        for(auto j : i.constStonesRef()){
-            std::cout << j.first << ' ' << j.second << '\n' << '\n' << '\n';
-        }
-    }    
 
     return true;
 }
@@ -132,13 +105,4 @@ const std::vector<std::vector<std::string>> Board::getBoard() const {
 
 bool Board::endGame() {
     return true;
-}
-
-void Board::huy() {
-    std::cout << "\n\n";
-    std::cout << "this в huy: " << this << '\n';
-    for (int i = 0; i < _size; ++i) {
-        for (int j = 0; j < _size; ++j) std::cout << char(_board[i][j]) << ' ';
-        std::cout << '\n';
-    }
 }

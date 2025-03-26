@@ -43,18 +43,12 @@ void StoneGroup::updateLiberty() const {
         auto [r, c] = pos;
         if (r < 0 || r >= _board->size() || c < 0 || c >= _board->size()) return;
 
-
-        //std::cout << r << ' ' << c << ' ' << (char)(*_board)[r][c] << '\n';
-
-
         if (visited.count({r, c}) != 0) return;
         visited.insert({r, c});
 
         if ((*_board)[r][c] == State::Neutral)
             ++liberties;
-        else if ((*_board)[r][c] != _color)
-            return;
-        else
+        else if ((*_board)[r][c] == _color)
             for (const auto& dir : directions) explore({r + dir.first, c + dir.second});
     };
 
@@ -68,8 +62,8 @@ void StoneGroup::addStone(std::pair<int, int> s) {
     updateLiberty();
 }
 
-void StoneGroup::addGroup(StoneGroup&& other) {
-    _stones.merge(std::move(other._stones));
+void StoneGroup::addGroup(StoneGroup& other) {
+    _stones.merge(other._stones);
     updateLiberty();
 }
 
@@ -79,6 +73,12 @@ bool StoneGroup::isIn(int row, int col) const {
 
 bool StoneGroup::operator==(const StoneGroup& other) const {
     return _stones == other._stones && _liberty == other._liberty && _color == other._color;
+}
+
+void StoneGroup::operator=(StoneGroup& other) {
+    _stones = other._stones;
+    _liberty = other._liberty;
+    _color = other._color;
 }
 
 void StoneGroup::decrLiverty1() const {

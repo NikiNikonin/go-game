@@ -76,16 +76,13 @@ int main() {
         }
 
         std::string move = request["move"];
-        // board->huy(); // huy до makeMove 
-        if (!board->makeMove(move)) { // <- внутри makeMove есть huy
+        if (!board->makeMove(move)) {
             res.set_content("false", "application/json");
         } else {
             res.set_content(boardToJson(*board).dump(), "application/json");
         }
-        // board->huy(); // huy после makeMove
         return;
     });
 
-    std::cout << "Server running on http://localhost:8080\n";
     svr.listen("localhost", 8080);
 }
