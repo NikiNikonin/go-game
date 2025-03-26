@@ -4,11 +4,11 @@ Board::Board(int s) : _stone_groups({}), _curr_player(PlayerColor::Black) {
     int sizes[3] = {9, 13, 19};
     _size = sizes[s];
     _board = std::vector<std::vector<State>>(_size, std::vector<State>(_size, State::Neutral));
-    std::cout << "nu pizdec\n";
+    // std::cout << "nu pizdec\n";
 }
 
 Board::~Board() {
-    std::cout << "nu ahuet'\n";
+    // std::cout << "nu ahuet'\n";
 }
 
 bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
@@ -16,6 +16,8 @@ bool Board::isKoViolation(std::vector<std::vector<State>>& board) {
 }
 
 bool Board::makeMove(std::string move) {
+    // std::cout << "this в makeMove: " << this << '\n';
+
     if (move == "skip") {
         _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
         if (_doubleSkip)
@@ -32,7 +34,6 @@ bool Board::makeMove(std::string move) {
     if (row < 0 || row >= _size) return false;
     int col = std::stoi(move.substr(1)) - 1;
     if (col < 0 || col >= _size) return false;
-    std::cout << row << ' ' << col << '\n';
 
     if (_board[row][col] != State::Neutral) return false;
 
@@ -51,14 +52,17 @@ bool Board::makeMove(std::string move) {
     //     std::cout << '\n';
     // }
 
-    std::unordered_set<StoneGroup> tmp_stone_groups = _stone_groups;
     tmp_board[row][col] = State(_curr_player);
+    std::unordered_set<StoneGroup> tmp_stone_groups = _stone_groups;
+    for (auto& i : tmp_stone_groups) i.setBoardPtr(&tmp_board);
     std::vector<std::pair<int, int>> directions = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-    std::vector<StoneGroup> new_groups({StoneGroup({row, col}, &_board)}), will_be_dead;
+    std::vector<StoneGroup> new_groups({StoneGroup({row, col}, &tmp_board)}), will_be_dead;
     for (const auto& dir : directions) {
         int x = (row + dir.first < 0 ? 0 : (row + dir.first >= _size ? _size : row + dir.first));
         int y = (col + dir.second < 0 ? 0 : (col + dir.second >= _size ? _size : col + dir.second));
         if (_board[x][y] == State::Neutral) continue;
+
+
         if (_board[x][y] == State(_curr_player)) {
             for (const auto& group : tmp_stone_groups)
                 if (group.isIn(x, x)) {
@@ -89,7 +93,10 @@ bool Board::makeMove(std::string move) {
         group.updateLiberty();
         if (group.liberty() == 0) will_be_dead.push_back(group);
     }
-    for (auto& dead : will_be_dead) tmp_stone_groups.erase(dead);
+    for (auto& dead : will_be_dead) {
+        dead.clearStones();
+        tmp_stone_groups.erase(dead);
+    }
 
     if (isKoViolation(tmp_board)) return false;
     _stone_groups = std::move(tmp_stone_groups);
@@ -97,13 +104,19 @@ bool Board::makeMove(std::string move) {
     _board = std::move(tmp_board);
     _curr_player = (_curr_player == PlayerColor::White ? PlayerColor::Black : PlayerColor::White);
 
-    huy();
-    // for(auto i : _stone_groups){
-    //     for(auto j : i.constStonesRef()){
-    //         std::cout << j.first << ' ' << j.second << " | ";
-    //     }
-    //     std::cout << '\n';
-    // }
+    // huy();
+    //  for(auto i : _stone_groups){
+    //      for(auto j : i.constStonesRef()){
+    //          std::cout << j.first << ' ' << j.second << " | ";
+    //      }
+    //      std::cout << '\n';
+    //  }
+    for(auto i : _stone_groups) {
+        std::cout << i.liberty() << '\n';
+        for(auto j : i.constStonesRef()){
+            std::cout << j.first << ' ' << j.second << '\n' << '\n' << '\n';
+        }
+    }    
 
     return true;
 }
@@ -123,6 +136,7 @@ bool Board::endGame() {
 
 void Board::huy() {
     std::cout << "\n\n";
+    std::cout << "this в huy: " << this << '\n';
     for (int i = 0; i < _size; ++i) {
         for (int j = 0; j < _size; ++j) std::cout << char(_board[i][j]) << ' ';
         std::cout << '\n';

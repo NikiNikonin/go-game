@@ -76,12 +76,13 @@ int main() {
         }
 
         std::string move = request["move"];
+        // board->huy(); // huy до makeMove 
         if (!board->makeMove(move)) { // <- внутри makeMove есть huy
             res.set_content("false", "application/json");
         } else {
             res.set_content(boardToJson(*board).dump(), "application/json");
         }
-        board->huy(); // huy после makeMove
+        // board->huy(); // huy после makeMove
         return;
     });
 

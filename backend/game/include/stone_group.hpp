@@ -1,6 +1,7 @@
 #pragma once
 #include "./enums.hpp"
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <set>
 #include <utility>
@@ -10,7 +11,7 @@ class StoneGroup {
   private:
     std::set<std::pair<int, int>> _stones;
     mutable int _liberty;
-    std::vector<std::vector<State>>* _board;
+    mutable std::vector<std::vector<State>>* _board;
     State _color;
 
   public:
@@ -19,6 +20,8 @@ class StoneGroup {
     ~StoneGroup();
 
     void updateLiberty() const;
+    void clearStones();
+    void setBoardPtr(std::vector<std::vector<State>>*) const;
     int liberty() const;
     int& libertyRef();
     const std::set<std::pair<int, int>>& constStonesRef() const;
@@ -32,14 +35,11 @@ class StoneGroup {
 };
 
 namespace std {
-  template <>
-  struct hash<StoneGroup> {
-      size_t operator()(const StoneGroup& group) const {
-          size_t h = 0;
-          for (const auto& stone : group.constStonesRef()) {
-              h ^= std::hash<int>()(stone.first) ^ (std::hash<int>()(stone.second) << 1);
-          }
-          return h;
-      }
-  };
-}
+template <> struct hash<StoneGroup> {
+    size_t operator()(const StoneGroup& group) const {
+        size_t h = 0;
+        for (const auto& stone : group.constStonesRef()) { h ^= std::hash<int>()(stone.first) ^ (std::hash<int>()(stone.second) << 1); }
+        return h;
+    }
+};
+} 

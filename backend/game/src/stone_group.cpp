@@ -1,13 +1,12 @@
 #include "../include/stone_group.hpp"
 
-StoneGroup::StoneGroup(State c, std::vector<std::vector<State>>* b) : _stones({}), _liberty(0), _board(b), _color(c) {}
+StoneGroup::StoneGroup(State c, std::vector<std::vector<State>>* b) : _stones({}), _liberty(0), _board(b), _color(c) {
+}
 
 StoneGroup::StoneGroup(std::pair<int, int> p, std::vector<std::vector<State>>* b) : _stones({p}), _board(b), _color((*_board)[p.first][p.second]) {
     updateLiberty();
 }
-StoneGroup::~StoneGroup() {
-    for (auto i : _stones) (*_board)[i.first][i.second] = State::Neutral;
-}
+StoneGroup::~StoneGroup() = default;
 
 int StoneGroup::liberty() const {
     return _liberty;
@@ -25,6 +24,14 @@ State StoneGroup::color() const {
     return _color;
 }
 
+void StoneGroup::clearStones() {
+    for (auto i : _stones) (*_board)[i.first][i.second] = State::Neutral;
+}
+
+void StoneGroup::setBoardPtr(std::vector<std::vector<State>>* new_board) const {
+    _board = new_board;
+}
+
 void StoneGroup::updateLiberty() const {
     std::set<std::pair<int, int>> visited;
     std::pair<int, int> start = *_stones.begin();
@@ -35,6 +42,11 @@ void StoneGroup::updateLiberty() const {
     std::function<void(std::pair<int, int>)> explore = [&](std::pair<int, int> pos) {
         auto [r, c] = pos;
         if (r < 0 || r >= _board->size() || c < 0 || c >= _board->size()) return;
+
+
+        //std::cout << r << ' ' << c << ' ' << (char)(*_board)[r][c] << '\n';
+
+
         if (visited.count({r, c}) != 0) return;
         visited.insert({r, c});
 
