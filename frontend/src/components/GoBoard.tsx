@@ -32,8 +32,12 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
         Neutral: NeutralGoStone,
     };
     const lastMousePosition = useRef({ x: 0, y: 0 });
+    const whiteTextColor = "#bfb082";
+    const blackTextColor = "#cc6acc";
 
     async function fetchToServer(move: string) {
+        console.log(move);
+
         try {
             const response = await fetch(`${API_URL}/move`, {
                 method: "POST",
@@ -131,13 +135,12 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     <motion.span
                         key={number}
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: playing ? 1 : 0 }}
+                        animate={{ opacity: playing ? 1 : 0, color: `${currentPlayer === "Black" ? blackTextColor : whiteTextColor}` }}
                         transition={{ duration: 0.3, ease: "linear" }}
                         style={{
                             position: 'absolute',
                             bottom: `${stoneRadius + 9}px`,
                             fontSize: '13px',
-                            color: 'White',
                             left: `${(number - 1) * (brickSide + 2) - getTextMetrics(number.toString()).width / 2}px`,
                         }}
                     >
@@ -154,13 +157,12 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     <motion.span
                         key={char}
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: playing ? 1 : 0 }}
+                        animate={{ opacity: playing ? 1 : 0 , color: `${currentPlayer === "Black" ? blackTextColor : whiteTextColor}`}}
                         transition={{ duration: 0.3, ease: "linear" }}
                         style={{
                             position: 'absolute',
                             marginTop: '-9px',
                             fontSize: '13px',
-                            color: 'White',
                             top: `${index * (brickSide + 2)}px`,
                             right: `${stoneRadius + 13}px`,
                         }}

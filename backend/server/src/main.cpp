@@ -12,6 +12,7 @@ Board* board = nullptr;
 json boardToJson(Board& b) {
     json j;
     j["board"] = b.getBoard();
+    if (b.result() != "none") j["result"] = b.result();
     return j;
 }
 
@@ -81,6 +82,7 @@ int main() {
         } else {
             res.set_content(boardToJson(*board).dump(), "application/json");
         }
+
         return;
     });
 
