@@ -1,1 +1,1 @@
-/backend/lib/libtorch filter=lfs diff=lfs merge=lfs -text
+/backend/lib/libtorch/** filter=lfs diff=lfs merge=lfs -text
