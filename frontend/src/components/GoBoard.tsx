@@ -97,7 +97,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
         };
 
         const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.key === "s") {
+            if (e.code === "KeyS") {
               fetchToServer("skip");
             }
           };
