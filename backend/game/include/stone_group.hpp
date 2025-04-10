@@ -11,21 +11,21 @@ class StoneGroup {
   private:
     std::set<std::pair<int, int>> _stones;
     mutable int _liberty;
-    mutable std::vector<std::vector<State>>* _board;
-    State _color;
+    mutable std::vector<std::vector<PointColor>>* _board;
+    PointColor _color;
 
   public:
-    StoneGroup(State, std::vector<std::vector<State>>*);
-    StoneGroup(std::pair<int, int>, std::vector<std::vector<State>>*);
+    StoneGroup(PointColor, std::vector<std::vector<PointColor>>*);
+    StoneGroup(std::pair<int, int>, std::vector<std::vector<PointColor>>*);
     ~StoneGroup();
 
     void updateLiberty() const;
     void clearStones();
-    void setBoardPtr(std::vector<std::vector<State>>*) const;
+    void setBoardPtr(std::vector<std::vector<PointColor>>*) const;
     int liberty() const;
     int& libertyRef();
     const std::set<std::pair<int, int>>& constStonesRef() const;
-    State color() const;
+    PointColor color() const;
     bool isIn(int, int) const;
     void addStone(std::pair<int, int>);
     void addGroup(StoneGroup&);

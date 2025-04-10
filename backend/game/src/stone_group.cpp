@@ -1,9 +1,9 @@
 #include "../include/stone_group.hpp"
 
-StoneGroup::StoneGroup(State c, std::vector<std::vector<State>>* b) : _stones({}), _liberty(0), _board(b), _color(c) {
+StoneGroup::StoneGroup(PointColor c, std::vector<std::vector<PointColor>>* b) : _stones({}), _liberty(0), _board(b), _color(c) {
 }
 
-StoneGroup::StoneGroup(std::pair<int, int> p, std::vector<std::vector<State>>* b) : _stones({p}), _board(b), _color((*_board)[p.first][p.second]) {
+StoneGroup::StoneGroup(std::pair<int, int> p, std::vector<std::vector<PointColor>>* b) : _stones({p}), _board(b), _color((*_board)[p.first][p.second]) {
     updateLiberty();
 }
 StoneGroup::~StoneGroup() = default;
@@ -20,15 +20,15 @@ const std::set<std::pair<int, int>>& StoneGroup::constStonesRef() const {
     return _stones;
 }
 
-State StoneGroup::color() const {
+PointColor StoneGroup::color() const {
     return _color;
 }
 
 void StoneGroup::clearStones() {
-    for (auto i : _stones) (*_board)[i.first][i.second] = State::Neutral;
+    for (auto i : _stones) (*_board)[i.first][i.second] = PointColor::Neutral;
 }
 
-void StoneGroup::setBoardPtr(std::vector<std::vector<State>>* new_board) const {
+void StoneGroup::setBoardPtr(std::vector<std::vector<PointColor>>* new_board) const {
     _board = new_board;
 }
 
@@ -46,7 +46,7 @@ void StoneGroup::updateLiberty() const {
         if (visited.count({r, c}) != 0) return;
         visited.insert({r, c});
 
-        if ((*_board)[r][c] == State::Neutral)
+        if ((*_board)[r][c] == PointColor::Neutral)
             ++liberties;
         else if ((*_board)[r][c] == _color)
             for (const auto& dir : directions) explore({r + dir.first, c + dir.second});

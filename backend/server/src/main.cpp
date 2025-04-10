@@ -11,7 +11,7 @@ Board* board = nullptr;
 
 json boardToJson(Board& b) {
     json j;
-    j["board"] = b.getBoard();
+    j["board"] = b.getPointBoard();
     if (b.result() != "none") j["result"] = b.result();
     return j;
 }

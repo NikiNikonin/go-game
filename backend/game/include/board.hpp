@@ -8,20 +8,17 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <stack>
 
 class Board {
   private:
-    std::vector<std::vector<State>> _board;
-    std::vector<std::vector<State>> _lastBoard;
-    std::unordered_set<StoneGroup> _stone_groups;
+    std::vector<std::vector<PointColor>> _board_lines;
+    std::vector<std::vector<std::vector<AreaColor>>> _board_area;
     PlayerColor _curr_player;
-    int _size, _b_captured, _w_captured;
     std::string _result;
-    bool _double_skip = false;
+    int _size;
 
-    bool isKoViolation(std::vector<std::vector<State>>&);
     void endGame();
-    public:
     std::map<char, int> countTerritory();
 
   public:
@@ -30,5 +27,5 @@ class Board {
 
     bool makeMove(std::string);
     std::string result() const;
-    const std::vector<std::vector<std::string>> getBoard() const;
+    const std::vector<std::vector<std::string>> getPointBoard() const;
 };
