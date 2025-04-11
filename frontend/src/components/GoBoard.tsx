@@ -6,7 +6,7 @@ import NeutralGoStone from '../assets/neutral-go-stone.svg'
 
 type StoneColor = "White" | "Black" | "Neutral";
 
-const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean }) => {
+const GoBoard = ({ size = 0, playing = false, players_cnt }: { size: number, playing: boolean, players_cnt: number }) => {
     const API_URL = "http://localhost:8080";
     const [prevSize, setPrevSize] = useState(size);
     const stoneScale = 0.7;
@@ -35,11 +35,22 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
     const whiteTextColor = "#bfb082";
     const blackTextColor = "#cc6acc";
 
-    async function fetchToServer(move: string) {
+    const getTextMetrics = (text: string, fontSize: string = '13px', fontFamily: string = 'Arial') => {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        if (!context)
+            throw new Error('Anable to get canvas 2d context.');
+        context.font = `${fontSize} ${fontFamily}`;
+        const metrics = context.measureText(text);
+        return metrics;
+    }
+
+    async function makePlayerMove(move: string) {
+        if (players_cnt === 0 || players_cnt === 1 && currentPlayer === "White") return;
         console.log(move);
 
         try {
-            const response = await fetch(`${API_URL}/move`, {
+            const response = await fetch(`${API_URL}/player-move`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -63,11 +74,31 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
         return `${sideBarChars[size][row]}${hatNumbers[size][col]}`;
     }
 
+    // function getMoveFromString(move: string) : {row: number, col: number} {
+    //     const match = move.match(/^([A-Za-z]+)(\d+)$/);
+
+    //     let row = 0, col = 0;
+    //     if (!match) return {row, col};
+    //     const letterPart = match[1].toUpperCase();
+    //     const numberPart = parseInt(match[2], 10);
+
+    //     const charCode = letterPart.charCodeAt(0) - 'A'.charCodeAt(0);
+
+    //     if (charCode >= 8) {
+    //         row += charCode - 1;
+    //     } else {
+    //         row += charCode;
+    //     }
+
+    //     col = numberPart - 1;
+
+    //     return { row, col };
+    // }
+
     const handleClick = useCallback((row: number, col: number) => {
         const move = getMoveString(row, col);
-        fetchToServer(move);
-
-    }, [board, currentPlayer]);
+        makePlayerMove(move);
+    }, []);
 
     useEffect(() => {
         let animationFrame: number;
@@ -96,34 +127,86 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
             lastMousePosition.current = { x: e.clientX, y: e.clientY };
         };
 
-        const handleKeyPress = (e: KeyboardEvent) => {
-            if (e.code === "KeyS") {
-              fetchToServer("skip");
-            }
-          };
-
         window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("keydown", handleKeyPress);
         animationFrame = requestAnimationFrame(updateGradient);
 
 
         return () => {
             window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("keydown", handleKeyPress);
             cancelAnimationFrame(animationFrame);
         };
-    }, [playing, size]);
+    }, [size]);
 
+    useEffect(() => {
+        if (size === 0) {
+            board[1][1] = "White";
+            board[2][2] = "White";
+            board[1][2] = "Black";
+            board[2][1] = "Black";
 
-    const getTextMetrics = (text: string, fontSize: string = '13px', fontFamily: string = 'Arial') => {
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        if (!context)
-            throw new Error('Anable to get canvas 2d context.');
-        context.font = `${fontSize} ${fontFamily}`;
-        const metrics = context.measureText(text);
-        return metrics;
-    }
+            board[6][6] = "Black";
+            board[7][7] = "Black";
+            board[6][7] = "White";
+            board[7][6] = "White";
+            return;
+        }
+        if (size === 1) {
+            board[2][2] = "White";
+            board[3][3] = "White";
+            board[2][3] = "Black";
+            board[3][2] = "Black";
+
+            board[2][9] = "White";
+            board[3][10] = "White";
+            board[2][10] = "Black";
+            board[3][9] = "Black";
+
+            board[9][2] = "White";
+            board[10][3] = "White";
+            board[10][2] = "Black";
+            board[9][3] = "Black";
+
+            board[9][9] = "White";
+            board[10][10] = "White";
+            board[9][10] = "Black";
+            board[10][9] = "Black";
+            return;
+        }
+        if (size === 2) {
+
+            return;
+        }
+    }, [playing]);
+
+    useEffect(() => {
+        if (!playing) return;
+        if (players_cnt === 2 || (players_cnt === 1 && currentPlayer === "Black")) return;
+    
+        const fetchBotMove = async () => {
+            try {
+                const response = await fetch(`${API_URL}/bot-move`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ player: currentPlayer })
+                });
+    
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${errorText}`);
+                }
+    
+                const data = await response.json();
+                setBoard(data.board);
+                setCurrentPlayer(prev => prev === "Black" ? "White" : "Black");
+            } catch (error) {
+                console.error("Bot move error:", error);
+            }
+        };
+    
+        fetchBotMove();
+    }, [currentPlayer, playing]);
 
     return (
         <div className="relative w-screen h-screen overflow-hidden">
@@ -157,7 +240,7 @@ const GoBoard = ({ size = 0, playing = false }: { size: number, playing: boolean
                     <motion.span
                         key={char}
                         initial={{ opacity: 0 }}
-                        animate={{ opacity: playing ? 1 : 0 , color: `${currentPlayer === "Black" ? blackTextColor : whiteTextColor}`}}
+                        animate={{ opacity: playing ? 1 : 0, color: `${currentPlayer === "Black" ? blackTextColor : whiteTextColor}` }}
                         transition={{ duration: 0.3, ease: "linear" }}
                         style={{
                             position: 'absolute',

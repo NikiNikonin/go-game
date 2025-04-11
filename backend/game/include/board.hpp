@@ -1,31 +1,43 @@
 #pragma once
 #include "./enums.hpp"
-#include "./stone_group.hpp"
+#include <algorithm>
+#include <climits>
 #include <iostream>
-#include <queue>
-#include <set>
 #include <map>
+#include <queue>
+#include <random>
+#include <set>
+#include <stack>
 #include <string>
 #include <unordered_set>
 #include <vector>
-#include <stack>
 
 class Board {
   private:
-    std::vector<std::vector<PointColor>> _board_lines;
-    std::vector<std::vector<std::vector<AreaColor>>> _board_area;
-    PlayerColor _curr_player;
+    std::vector<std::vector<PointColor>> _board;
     std::string _result;
     int _size;
 
     void endGame();
-    std::map<char, int> countTerritory();
 
   public:
+    PlayerColor _curr_player;
     Board(int);
     ~Board();
 
-    bool makeMove(std::string);
+    void makeMove(std::string);
+    std::vector<std::string> getValidMoves(PlayerColor);
+    std::vector<std::string> getValidMoves();
+    bool isMoveValid(std::string, PlayerColor);
+    bool isMoveValid(std::string);
+    int evaluateBoard(PlayerColor);
+    int alphaBeta(int, int, int, bool, PlayerColor);
+    std::string getBestMove(int, PlayerColor);
+    std::string getBestMove(int);
+    std::string getRandomMove(PlayerColor);
+    std::string getRandomMove();
+
     std::string result() const;
     const std::vector<std::vector<std::string>> getPointBoard() const;
+    void operator=(const Board& other);
 };

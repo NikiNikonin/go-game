@@ -29,14 +29,14 @@ export default function Auto() {
     async function handlePlayButtonClick() {
         setPlaying(true);
         try {
-            const response = await fetch(`${API_URL}/new_game`, {
+            const response = await fetch(`${API_URL}/new-game`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ size: selectedBoardSize }),
+                body: JSON.stringify({ size: selectedBoardSize, _1st_bot_difficulty: selectedBotLevel1, _2st_bot_difficulty: selectedBotLevel2 }),
             });
-    
+
             const data = await response.json();
             console.log("New Game:", data);
         } catch (error) {
@@ -46,7 +46,7 @@ export default function Auto() {
 
     return (
         <div>
-            <GoBoard size={selectedBoardSize} playing={isPlaying} />
+            <GoBoard size={selectedBoardSize} playing={isPlaying} players_cnt={0} />
             <div className={`z-10 fixed top-0 left-0 bg-neutral-900/60 h-2/3 w-full transition-opacity duration-300 ${isPlaying ? 'opacity-0' : 'opacity-100'}`} />
             <div className={`z-10 fixed bottom-0 left-0 right-0 bg-emerald-900/90 h-1/3 transition-transform duration-300 ${isPlaying ? 'translate-y-full' : 'translate-y-0'}`}>
                 <div className="flex flex-col items-center justify-between min-h-screen text-white">
